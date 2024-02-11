@@ -220,7 +220,7 @@ def display_webpage_description(soup: BeautifulSoup) -> None:
     metatags = soup.find_all("meta")
     for meta in metatags:
         print("Meta : ", meta)
-    print("xyz")
+    print(soup)
 
 def writer(datasets, dataset_names, output_dir):
     """Write content of all datasets to file.
