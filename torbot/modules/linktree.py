@@ -16,7 +16,7 @@ from bs4 import BeautifulSoup
 
 from .color import color
 from .config import project_root_directory
-from .nlp.main import classify
+#from .nlp.main import classify
 
 
 class LinkNode(Node):
@@ -62,11 +62,14 @@ class LinkTree(Tree):
             soup.title.text.strip() if soup.title is not None else parse_hostname(id)
         )
         try:
-            [classification, accuracy] = classify(resp.text)
+            #[classification, accuracy] = classify(resp.text)
             numbers = parse_phone_numbers(soup)
             emails = parse_emails(soup)
+            # data = LinkNode(
+            #     title, id, resp.status_code, classification, accuracy, numbers, emails
+            # )
             data = LinkNode(
-                title, id, resp.status_code, classification, accuracy, numbers, emails
+                title, id, resp.status_code, "", 0.0, numbers, emails
             )
             self.create_node(title, identifier=id, parent=parent_id, data=data)
         except exceptions.DuplicatedNodeIdError:
