@@ -2,6 +2,7 @@
 Module that contains methods for collecting all relevant data from links,
 and saving data to file.
 """
+
 import re
 import httpx
 import logging
@@ -220,7 +221,9 @@ def display_webpage_description(soup: BeautifulSoup) -> None:
     metatags = soup.find_all("meta")
     for meta in metatags:
         print("Meta : ", meta)
-    print(soup)
+    # print(soup)
+    print(soup.get_text(" | ", strip=True))
+
 
 def writer(datasets, dataset_names, output_dir):
     """Write content of all datasets to file.
