@@ -224,7 +224,8 @@ def display_webpage_description(soup: BeautifulSoup) -> None:
     # print(soup)
     print(soup.get_text(" | ", strip=True))
 
-
+def store_webpage_description(soup: BeautifulSoup) -> None:
+    
 def writer(datasets, dataset_names, output_dir):
     """Write content of all datasets to file.
 
