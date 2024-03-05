@@ -6,6 +6,7 @@ and saving data to file.
 import re
 import httpx
 import logging
+import mysql.connector
 
 from urllib.parse import urlsplit
 from bs4 import BeautifulSoup
@@ -83,9 +84,9 @@ def execute_all(
             logging.debug(e)
             cprint("Error", "red")
 
-    display_webpage_description(soup)
+    # display_webpage_description(soup)
     # display_headers(response)
-
+    store_webpage_description(soup,link)
 
 def display_headers(response):
     """Print all headers in response object.
@@ -224,8 +225,44 @@ def display_webpage_description(soup: BeautifulSoup) -> None:
     # print(soup)
     print(soup.get_text(" | ", strip=True))
 
-def store_webpage_description(soup: BeautifulSoup) -> None:
-    
+def store_webpage_description(soup: BeautifulSoup, link: str) -> None:
+    # MySQL connection parameters
+    host = 'localhost'
+    database = 'mydatabase'
+    user = 'myuser'
+    password = 'mypassword'
+
+    try:
+        # Connect to MySQL server
+        connection = mysql.connector.connect(
+            host=host,
+            database=database,
+            user=user,
+            password=password
+        )
+
+        if connection.is_connected():
+            print('Connected to MySQL server')
+            
+            # Create a cursor object to execute queries
+            cursor = connection.cursor()
+
+            # # Sample query
+            query = f"INSERT INTO crawled_data (url, collected_text) VALUES({link},{soup.get_text(' | ',True)})"
+            
+            # # Execute the query
+            cursor.execute(query)
+
+    except mysql.connector.Error as e:
+        print("Error connecting to MySQL:", e)
+
+    finally:
+        # Close connection
+        if 'connection' in locals() and connection.is_connected():
+            cursor.close()
+            connection.close()
+            print("MySQL connection is closed")
+
 def writer(datasets, dataset_names, output_dir):
     """Write content of all datasets to file.
 
