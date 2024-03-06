@@ -2,7 +2,7 @@
 Module that contains methods for collecting all relevant data from links,
 and saving data to file.
 """
-
+import json
 import re
 import httpx
 import logging
@@ -67,6 +67,9 @@ def execute_all(
     """
 
     resp = client.get(url=link)
+    # with open("lodasur.html", "w") as f:
+    #     f.write(resp.text)
+
     soup = BeautifulSoup(resp.text, "html.parser")
     validation_functions = [
         get_robots_txt,
@@ -77,12 +80,12 @@ def execute_all(
         get_dot_htaccess,
         get_bitcoin_address,
     ]
-    for validate_func in validation_functions:
-        try:
-            validate_func(client, link, resp)
-        except Exception as e:
-            logging.debug(e)
-            cprint("Error", "red")
+    # for validate_func in validation_functions:
+    #     try:
+    #         validate_func(client, link, resp)
+    #     except Exception as e:
+    #         logging.debug(e)
+    #         cprint("Error", "red")
 
     # display_webpage_description(soup)
     # display_headers(response)
@@ -248,11 +251,10 @@ def store_webpage_description(soup: BeautifulSoup, link: str) -> None:
             cursor = connection.cursor()
 
             # # Sample query
-            query = f"INSERT INTO crawled_data (url, collected_text) VALUES({link},{soup.get_text(' | ',True)})"
-            
+            query = f"INSERT INTO crawled_data (url, collected_text) VALUES({json.dumps(link)},{json.dumps(soup.find('body').get_text(' | ',True))})"
             # # Execute the query
             cursor.execute(query)
-
+            connection.commit()
     except mysql.connector.Error as e:
         print("Error connecting to MySQL:", e)
 
