@@ -67,7 +67,7 @@ def execute_all(
     """
 
     resp = client.get(url=link)
-    # with open("lodasur.html", "w") as f:
+    # with open("sur.html", "w") as f:
     #     f.write(resp.text)
 
     soup = BeautifulSoup(resp.text, "html.parser")
