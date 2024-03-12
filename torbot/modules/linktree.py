@@ -1,6 +1,8 @@
 """
 Module is used for analyzing link relationships
 """
+
+import mysql.connector
 import http.client
 import os
 import json
@@ -16,7 +18,8 @@ from bs4 import BeautifulSoup
 
 from .color import color
 from .config import project_root_directory
-#from .nlp.main import classify
+
+# from .nlp.main import classify
 
 
 class LinkNode(Node):
@@ -56,22 +59,26 @@ class LinkTree(Tree):
         Creates a node for a tree using the given ID which corresponds to a URL.
         If the parent_id is None, this will be considered a root node.
         """
-        resp = self._client.get(id)
+        try:
+            resp = self._client.get(id)
+        except httpx.ProxyError as e:
+            print(e)
+            return
+
         soup = BeautifulSoup(resp.text, "html.parser")
         title = (
             soup.title.text.strip() if soup.title is not None else parse_hostname(id)
         )
         try:
-            #[classification, accuracy] = classify(resp.text)
-            numbers = parse_phone_numbers(soup)
-            emails = parse_emails(soup)
+            # [classification, accuracy] = classify(resp.text)
+            # numbers = parse_phone_numbers(soup)
+            # emails = parse_emails(soup)
             # data = LinkNode(
             #     title, id, resp.status_code, classification, accuracy, numbers, emails
             # )
-            data = LinkNode(
-                title, id, resp.status_code, "", 0.0, numbers, emails
-            )
+            data = LinkNode(title, id, resp.status_code, "", 0.0, [], [])
             self.create_node(title, identifier=id, parent=parent_id, data=data)
+            store_webpage_description(soup, id)
         except exceptions.DuplicatedNodeIdError:
             logging.debug(f"found a duplicate URL {id}")
 
@@ -81,7 +88,11 @@ class LinkTree(Tree):
         """
         if depth > 0:
             depth -= 1
-            resp = self._client.get(url)
+            try:
+                resp = self._client.get(url)
+            except httpx.ProxyError as e:
+                print(e)
+                return
             children = parse_links(resp.text)
             for child in children:
                 self._append_node(id=child, parent_id=url)
@@ -219,3 +230,45 @@ def parse_phone_numbers(soup: BeautifulSoup) -> list[str]:
                 numbers.add(number)
 
     return list(numbers)
+
+
+def store_webpage_description(soup: BeautifulSoup, link: str) -> None:
+    # MySQL connection parameters
+    host = "localhost"
+    database = "mydatabase"
+    user = "myuser"
+    password = "mypassword"
+
+    try:
+        # Connect to MySQL server
+        connection = mysql.connector.connect(
+            host=host, database=database, user=user, password=password
+        )
+
+        if connection.is_connected():
+            print("Connected to MySQL server")
+
+            # Create a cursor object to execute queries
+            cursor = connection.cursor()
+
+            # # Sample query
+            try:
+                text = soup.find("body").get_text(" | ", True)
+            except:
+                print("Empty body found!!")
+                text = ""
+            query = "INSERT INTO crawled_data (url, collected_text) VALUES(%s,%s)"
+            value = (link, text)
+            # # Execute the query
+            cursor.execute(query, value)
+            connection.commit()
+
+    except mysql.connector.Error as e:
+        print("Error connecting to MySQL:", e)
+
+    finally:
+        # Close connection
+        if "connection" in locals() and connection.is_connected():
+            cursor.close()
+            connection.close()
+            print("MySQL connection is closed")

@@ -2,6 +2,7 @@
 Module that contains methods for collecting all relevant data from links,
 and saving data to file.
 """
+
 import json
 import re
 import httpx
@@ -80,16 +81,16 @@ def execute_all(
         get_dot_htaccess,
         get_bitcoin_address,
     ]
-    # for validate_func in validation_functions:
-    #     try:
-    #         validate_func(client, link, resp)
-    #     except Exception as e:
-    #         logging.debug(e)
-    #         cprint("Error", "red")
+    for validate_func in validation_functions:
+        try:
+            validate_func(client, link, resp)
+        except Exception as e:
+            logging.debug(e)
+            cprint("Error", "red")
 
-    # display_webpage_description(soup)
-    # display_headers(response)
-    store_webpage_description(soup,link)
+    display_webpage_description(soup)
+    display_headers(resp)
+
 
 def display_headers(response):
     """Print all headers in response object.
@@ -225,45 +226,7 @@ def display_webpage_description(soup: BeautifulSoup) -> None:
     metatags = soup.find_all("meta")
     for meta in metatags:
         print("Meta : ", meta)
-    # print(soup)
-    print(soup.get_text(" | ", strip=True))
 
-def store_webpage_description(soup: BeautifulSoup, link: str) -> None:
-    # MySQL connection parameters
-    host = 'localhost'
-    database = 'mydatabase'
-    user = 'myuser'
-    password = 'mypassword'
-
-    try:
-        # Connect to MySQL server
-        connection = mysql.connector.connect(
-            host=host,
-            database=database,
-            user=user,
-            password=password
-        )
-
-        if connection.is_connected():
-            print('Connected to MySQL server')
-            
-            # Create a cursor object to execute queries
-            cursor = connection.cursor()
-
-            # # Sample query
-            query = f"INSERT INTO crawled_data (url, collected_text) VALUES({json.dumps(link)},{json.dumps(soup.find('body').get_text(' | ',True))})"
-            # # Execute the query
-            cursor.execute(query)
-            connection.commit()
-    except mysql.connector.Error as e:
-        print("Error connecting to MySQL:", e)
-
-    finally:
-        # Close connection
-        if 'connection' in locals() and connection.is_connected():
-            cursor.close()
-            connection.close()
-            print("MySQL connection is closed")
 
 def writer(datasets, dataset_names, output_dir):
     """Write content of all datasets to file.
